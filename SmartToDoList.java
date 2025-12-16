@@ -1,0 +1,114 @@
+import java.awt.*;
+import java.io.*;
+import java.util.*;
+import javax.swing.*;
+
+public class SmartToDoList extends JFrame {
+
+    private DefaultListModel<String> taskModel;
+    private JList<String> taskList;
+    private JTextField taskInput;
+    private final String FILE_NAME = "tasks.txt";
+
+    public SmartToDoList() {
+        setTitle("Smart To-Do List App");
+        setSize(400, 500);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        taskModel = new DefaultListModel<>();
+        loadTasksFromFile();
+
+        taskList = new JList<>(taskModel);
+        JScrollPane scrollPane = new JScrollPane(taskList);
+
+        taskInput = new JTextField();
+        JButton addButton = new JButton("Add Task");
+        JButton deleteButton = new JButton("Delete Task");
+        JButton doneButton = new JButton("Mark as Done");
+
+        addButton.addActionListener(e -> addTask());
+        deleteButton.addActionListener(e -> deleteTask());
+        doneButton.addActionListener(e -> markAsDone());
+
+        JPanel inputPanel = new JPanel(new BorderLayout());
+        inputPanel.add(taskInput, BorderLayout.CENTER);
+        inputPanel.add(addButton, BorderLayout.EAST);
+
+        JPanel buttonPanel = new JPanel(new GridLayout(1, 2, 10, 10));
+        buttonPanel.add(doneButton);
+        buttonPanel.add(deleteButton);
+
+        add(inputPanel, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+        add(buttonPanel, BorderLayout.SOUTH);
+
+        setVisible(true);
+    }
+
+    private void addTask() {
+        String task = taskInput.getText().trim();
+        if (!task.isEmpty()) {
+            taskModel.addElement("📝 " + task);
+            taskInput.setText("");
+            saveTasksToFile();
+        }
+    }
+
+    private void deleteTask() {
+        int index = taskList.getSelectedIndex();
+        if (index != -1) {
+            taskModel.remove(index);
+            saveTasksToFile();
+        }
+    }
+
+    private void markAsDone() {
+        int index = taskList.getSelectedIndex();
+
+        if (index == -1) {
+            JOptionPane.showMessageDialog(this, "Please select a task to mark as done!");
+            return;
+        }
+
+        String task = taskModel.get(index);
+
+        // Clean both "📝" and "✅" versions
+        task = task.replace("📝", "").replace("✅", "").trim();
+
+        taskModel.set(index, "✅ " + task);
+
+        saveTasksToFile();
+    }
+
+    private void loadTasksFromFile() {
+        try {
+            File file = new File(FILE_NAME);
+            if (!file.exists()) return;
+
+            Scanner scanner = new Scanner(file);
+            while (scanner.hasNextLine()) {
+                taskModel.addElement(scanner.nextLine());
+            }
+            scanner.close();
+        } catch (Exception e) {
+            System.out.println("Error loading tasks.");
+        }
+    }
+
+    private void saveTasksToFile() {
+        try {
+            FileWriter writer = new FileWriter(FILE_NAME);
+            for (int i = 0; i < taskModel.size(); i++) {
+                writer.write(taskModel.get(i) + "\n");
+            }
+            writer.close();
+        } catch (Exception e) {
+            System.out.println("Error saving tasks.");
+        }
+    }
+
+    public static void main(String[] args) {
+        new SmartToDoList();
+    }
+}
